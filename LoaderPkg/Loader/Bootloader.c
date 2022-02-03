@@ -114,6 +114,60 @@ InitGraphics (
   // Hint: Use GetMode/SetMode functions.
   //
 
+  UINT32 MaxMode = GraphicsOutput->Mode->MaxMode;
+  DEBUG ((DEBUG_INFO, "ModeInfo: max = %d\n", MaxMode));
+
+  UINTN SizeOfInfo;
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  *Info;
+  EFI_STATUS QueryStatus;
+
+  for (UINT32 mode = 0; mode < MaxMode; ++mode) {
+      QueryStatus = GraphicsOutput->QueryMode (
+              GraphicsOutput,
+              mode,
+              &SizeOfInfo,
+              &Info
+      );
+      if (QueryStatus == EFI_SUCCESS) {
+          DEBUG ((DEBUG_INFO, "ModeInfo %d: height = %d; width = %d\n", mode, Info->VerticalResolution, Info->HorizontalResolution));
+      } else {
+          DEBUG ((DEBUG_ERROR, "ModeInfo: error for mode %d\n", mode));
+      }
+  }
+
+//            ModeInfo: max = 30
+//            ModeInfo 0: height = 480; width = 640
+//            ModeInfo 1: height = 480; width = 800
+//            ModeInfo 2: height = 600; width = 800
+//            ModeInfo 3: height = 624; width = 832
+//            ModeInfo 4: height = 640; width = 960
+//            ModeInfo 5: height = 600; width = 1024
+//            ModeInfo 6: height = 768; width = 1024
+//            ModeInfo 7: height = 864; width = 1152
+//            ModeInfo 8: height = 870; width = 1152
+//            ModeInfo 9: height = 720; width = 1280
+//            ModeInfo 10: height = 760; width = 1280
+//            ModeInfo 11: height = 768; width = 1280
+//            ModeInfo 12: height = 800; width = 1280 <-- window height perfect fits between top panel and dock on my Mac (not best width however)
+//            ModeInfo 13: height = 960; width = 1280
+//            ModeInfo 14: height = 1024; width = 1280
+//            ModeInfo 15: height = 768; width = 1360 <-- maximum qemu window size that doesn't exceed screen size
+//            ModeInfo 16: height = 768; width = 1366
+//            ModeInfo 17: height = 1050; width = 1400
+//            ModeInfo 18: height = 900; width = 1440
+//            ModeInfo 19: height = 900; width = 1600
+//            ModeInfo 20: height = 1200; width = 1600
+//            ModeInfo 21: height = 1050; width = 1680
+//            ModeInfo 22: height = 1080; width = 1920
+//            ModeInfo 23: height = 1200; width = 1920
+//            ModeInfo 24: height = 1440; width = 1920
+//            ModeInfo 25: height = 2000; width = 2000
+//            ModeInfo 26: height = 1536; width = 2048
+//            ModeInfo 27: height = 2048; width = 2048
+//            ModeInfo 28: height = 1440; width = 2560
+//            ModeInfo 29: height = 1600; width = 2560
+
+  GraphicsOutput->SetMode(GraphicsOutput, 15);
 
   //
   // Fill screen with black.
