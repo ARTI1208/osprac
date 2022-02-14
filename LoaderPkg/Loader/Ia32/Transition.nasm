@@ -24,7 +24,7 @@ LINEAR_DATA64_SEL:      equ $ - GDT_BASE
     GDT_DESC 0x92, 0xCF
 
 GDT_DESCRIPTOR:
-    dw 0x28 - 1 
+    dw 0x28 - 1
     dd GDT_BASE
     dd 0x0
 
@@ -33,7 +33,7 @@ KERNEL_ENTRY:
 
 LOADER_PARAMS:
     dd 0
-    
+
 PAGE_TABLE:
     dd 0
 
@@ -92,36 +92,79 @@ ASM_PFX(CallKernelThroughGateAsm):
     ; 1. Disable paging.
     ; LAB 2: Your code here:
 
+    mov edx, cr0
+    btc edx, 31
+    mov cr0, edx
+
     ; 2. Switch to our GDT that supports 64-bit mode and update CS to LINEAR_CODE_SEL.
     ; LAB 2: Your code here:
+
+    lgdt [GDT_DESCRIPTOR]
+    jmp LINEAR_CODE_SEL:AsmWithOurGdt
 
 AsmWithOurGdt:
 
     ; 3. Reset all the data segment registers to linear mode (LINEAR_DATA_SEL).
     ; LAB 2: Your code here:
 
+    ; It works even if segments are not changed
+    mov eax, LINEAR_DATA_SEL
+    mov ds, eax
+    mov es, eax
+    mov fs, eax
+    mov gs, eax
+    mov ss, eax
+
     ; 4. Enable PAE/PGE in CR4, which is required to transition to long mode.
     ; This may already be enabled by the firmware but is not guaranteed.
     ; LAB 2: Your code here:
+
+    mov ecx, cr4
+    bts ecx, 5 ; PAE
+    bts ecx, 7 ; PGE
+    mov cr4, ecx
 
     ; 5. Update page table address register (CR3) right away with the supplied PAGE_TABLE.
     ; This does nothing as paging is off at the moment as paging is disabled.
     ; LAB 2: Your code here:
 
+    mov ecx, [PAGE_TABLE]
+    mov cr3, ecx
+
     ; 6. Enable long mode (LME) and execute protection (NXE) via the EFER MSR register.
     ; LAB 2: Your code here:
+
+    mov ecx, 0xC0000080 ; EFER number
+    rdmsr
+    bts eax, 8  ; LME
+    bts eax, 11 ; NXE
+    wrmsr
 
     ; 7. Enable paging as it is required in 64-bit mode.
     ; LAB 2: Your code here:
 
+    mov ecx, cr0
+    bts ecx, 31
+    mov cr0, ecx
+
     ; 8. Transition to 64-bit mode by updating CS with LINEAR_CODE64_SEL.
     ; LAB 2: Your code here:
+
+    jmp LINEAR_CODE64_SEL:AsmInLongMode
 
 AsmInLongMode:
     BITS 64
 
     ; 9. Reset all the data segment registers to linear 64-bit mode (LINEAR_DATA64_SEL).
     ; LAB 2: Your code here:
+
+    ; It works even if segments are not changed
+    mov eax, LINEAR_DATA64_SEL
+    mov ds, eax
+    mov es, eax
+    mov fs, eax
+    mov gs, eax
+    mov ss, eax
 
     ; 10. Jump to the kernel code.
     mov ecx, [REL LOADER_PARAMS]
