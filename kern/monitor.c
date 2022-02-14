@@ -19,6 +19,7 @@
 int mon_help(int argc, char **argv, struct Trapframe *tf);
 int mon_kerninfo(int argc, char **argv, struct Trapframe *tf);
 int mon_backtrace(int argc, char **argv, struct Trapframe *tf);
+int mon_exit(int argc, char **argv, struct Trapframe *tf);
 
 struct Command {
     const char *name;
@@ -31,6 +32,7 @@ static struct Command commands[] = {
         {"help", "Display this list of commands", mon_help},
         {"kerninfo", "Display information about the kernel", mon_kerninfo},
         {"backtrace", "Print stack backtrace", mon_backtrace},
+        {"exit", "Exit JOS", mon_exit},
 };
 #define NCOMMANDS (sizeof(commands) / sizeof(commands[0]))
 
@@ -61,7 +63,29 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf) {
     // LAB 2: Your code here
 
+    cprintf("Stack backtrace:\n");
+
+    struct Ripdebuginfo info;
+
+    uintptr_t rbp = read_rbp();
+    while (rbp) {
+        uintptr_t rip = *((uintptr_t*) rbp + 1);
+        debuginfo_rip(rip, &info);
+
+        cprintf("  rbp %016lx rip %016lx\n", rbp, rip);
+        cprintf("    %s:%d: %s+%lu\n", info.rip_file, info.rip_line, info.rip_fn_name, rip - info.rip_fn_addr);
+
+        rbp = *(uintptr_t*) rbp;
+    }
+
     return 0;
+}
+
+int
+mon_exit(int argc, char **argv, struct Trapframe *tf) {
+    // LAB 2: Your code here
+    cprintf("You thought this is an exit command? Well, you are wrong\n");
+    return -1;
 }
 
 /* Kernel monitor command interpreter */
