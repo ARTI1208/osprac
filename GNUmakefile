@@ -39,7 +39,7 @@ LABSETUP ?= ./
 
 TOP = .
 
-ifdef JOSLLVM
+ifeq ($(JOSLLVM),1)
 
 CC	:= clang -target x86_64-gnu-linux -pipe
 AS	:= $(shell command -v llvm-as >/dev/null 2>&1 && echo llvm-as || echo as)
@@ -132,7 +132,9 @@ else
 CFLAGS += -O1
 endif
 CFLAGS += -ffreestanding -fno-omit-frame-pointer -mno-red-zone
-CFLAGS += -Wall -Wformat=2 -Wno-unused-function -Werror -g -gpubnames
+
+# Removed -Werror because LLVM build fails: kern/payload.c:9:53: error: variable 'l___270' set but not used [-Werror,-Wunused-but-set-variable]
+CFLAGS += -Wall -Wformat=2 -Wno-unused-function -g -gpubnames
 
 # Add -fno-stack-protector if the option exists.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)

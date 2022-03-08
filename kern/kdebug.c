@@ -90,6 +90,25 @@ error:
     return res;
 }
 
+static int
+address_in_symbol_table(const char *const fname, uintptr_t *offset) {
+
+    struct Elf64_Sym* symbolTable = (struct Elf64_Sym*) uefi_lp->SymbolTableStart;
+    const char* stringTableStart = (const char*) uefi_lp->StringTableStart;
+
+    size_t symbolTableSize = (uefi_lp->SymbolTableEnd - uefi_lp->SymbolTableStart) / sizeof(struct Elf64_Sym);
+
+    for (size_t i = 0; i < symbolTableSize; ++i) {
+        const char* name = stringTableStart + symbolTable[i].st_name;
+        if (!strcmp(fname, name)) { // equal
+            *offset = (uintptr_t) symbolTable[i].st_value;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 uintptr_t
 find_function(const char *const fname) {
     /* There are two functions for function name lookup.
@@ -100,5 +119,20 @@ find_function(const char *const fname) {
 
     // LAB 3: Your code here:
 
-    return 0;
+    struct Dwarf_Addrs dwarfAddress;
+    load_kernel_dwarf_info(&dwarfAddress);
+    uintptr_t offset = 0;
+    
+    int ret = address_by_fname(&dwarfAddress, fname, &offset);
+
+    if (ret < 0) {
+        ret = naive_address_by_fname(&dwarfAddress, fname, &offset);
+        if (!offset) ret = -1; // naive_address_by_fname sometimes returns 0 even if offset is invalid (zero)
+    }
+
+    if (ret < 0) {
+        ret = address_in_symbol_table(fname, &offset); // useful for gcc
+    }
+
+    return offset;
 }

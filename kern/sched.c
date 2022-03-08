@@ -7,6 +7,10 @@
 struct Taskstate cpu_ts;
 _Noreturn void sched_halt(void);
 
+static int nextEnvIndex(int currentIndex) {
+    return (currentIndex + 1) % NENV;
+}
+
 /* Choose a user environment to run and run it */
 _Noreturn void
 sched_yield(void) {
@@ -25,7 +29,18 @@ sched_yield(void) {
      * below to halt the cpu */
 
     // LAB 3: Your code here:
-    env_run(&envs[0]);
+    static int lastEnvIndex = -1;
+
+    for (int i = nextEnvIndex(lastEnvIndex); i != lastEnvIndex; i = nextEnvIndex(i)) {
+        if (envs[i].env_status == ENV_RUNNABLE) {
+            lastEnvIndex = i;
+            env_run(&envs[i]);
+        }
+    }
+
+    if (curenv && curenv->env_status == ENV_RUNNING) {
+        env_run(curenv);
+    }
 
     cprintf("Halt\n");
 
