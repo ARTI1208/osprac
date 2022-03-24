@@ -101,6 +101,14 @@ mon_dumpcmos(int argc, char **argv, struct Trapframe *tf) {
     // Hint: Use cmos_read8()/cmos_write8() functions.
     // LAB 4: Your code here
 
+    for (int i = 0, lines = 8; i < lines; ++i) {
+        cprintf("%02x:", i * 0x10);
+        for (int j = 0, lineLength = 16; j < lineLength; ++j) {
+            cprintf(" %02x", cmos_read8(i * 0x10 + j));
+        }
+        cprintf("\n");
+    }
+
     return 0;
 }
 
